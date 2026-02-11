@@ -1,32 +1,189 @@
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
-	</head>
-	<body>
-		<h1 id="heading"></h1>
-		<p>This page comes from a static asset stored at `public/index.html` as configured in `wrangler.jsonc`.</p>
-		<button id="button" type="button">Fetch a random UUID</button>
-		<output id="random" for="button"></output>
-		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
-				});
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>满意度调查</title>
+  <style>
+    :root { --bg:#f7f7f8; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --btn:#111827; --btnText:#ffffff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    h1 { margin: 0 0 8px; font-size: 20px; line-height: 1.3; }
+    p { margin: 0 0 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .row { margin-top: 14px; }
+    label { display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    textarea { width: 100%; min-height: 96px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none; background: #fff; }
+    textarea:focus { border-color: #c7cbd1; }
+    .stars { display:flex; align-items:center; gap:10px; margin: 10px 0 4px; }
+    .starBtn { border:0; background: transparent; padding: 0; cursor: pointer; font-size: 34px; line-height: 1; color: #d1d5db; }
+    .starBtn.on { color: #f59e0b; }
+    .scoreText { font-size: 14px; color: var(--muted); }
+    .actions { margin-top: 18px; display:flex; gap:10px; align-items:center; }
+    button.primary { border:0; background: var(--btn); color: var(--btnText); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+    button.primary:disabled { opacity: .55; cursor: not-allowed; }
+    button.secondary { border: 1px solid var(--border); background: #fff; color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+    .hint { margin-top: 12px; font-size: 12px; color: var(--muted); }
+    .err { margin-top: 12px; font-size: 13px; color: #b91c1c; display:none; }
+    .ok { margin-top: 12px; font-size: 13px; color: #065f46; display:none; }
+    .footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
+    .small { font-size: 12px; color: var(--muted); }
+    .topbar { display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="badge" id="refBadge">ref: -</div>
+      <div class="small" id="statusText"></div>
+    </div>
 
-			const button = document.getElementById("button");
-			button.addEventListener("click", () => {
-				fetch('/random')
-					.then((resp) => resp.text())
-					.then((text) => {
-						const random = document.getElementById('random');
-						random.textContent = text;
-					});
-			});
-		</script>
-	</body>
+    <div class="card">
+      <h1>请对本次服务进行评价</h1>
+      <p>请选择 1~5 星并点击「送信」。1~2 星将跳转到问题反馈页面，3~5 星将跳转到感谢页面。</p>
+
+      <div class="row">
+        <label>评分（必填）</label>
+        <div class="stars" role="radiogroup" aria-label="rating">
+          <button class="starBtn" data-star="1" aria-label="1 star" type="button">★</button>
+          <button class="starBtn" data-star="2" aria-label="2 stars" type="button">★</button>
+          <button class="starBtn" data-star="3" aria-label="3 stars" type="button">★</button>
+          <button class="starBtn" data-star="4" aria-label="4 stars" type="button">★</button>
+          <button class="starBtn" data-star="5" aria-label="5 stars" type="button">★</button>
+          <span class="scoreText" id="scoreText">未选择</span>
+        </div>
+        <div class="hint">提示：如需按门店/渠道统计，可在 URL 加上 ?ref=xxx</div>
+      </div>
+
+      <div class="row">
+        <label for="comment">补充说明（可选）</label>
+        <textarea id="comment" maxlength="1000" placeholder="可填写原因、建议或问题描述（最多1000字）"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="submitBtn" disabled type="button">送信</button>
+        <button class="secondary" id="resetBtn" type="button">重置</button>
+      </div>
+
+      <div class="err" id="errBox"></div>
+      <div class="ok" id="okBox"></div>
+
+      <div class="footer">
+        提交后会跳转页面。若网络错误，将提示重试。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const qs = new URLSearchParams(location.search);
+      const ref = (qs.get("ref") || "").slice(0, 100);
+      const refBadge = document.getElementById("refBadge");
+      refBadge.textContent = "ref: " + (ref || "-");
+
+      const starBtns = Array.from(document.querySelectorAll(".starBtn"));
+      const scoreText = document.getElementById("scoreText");
+      const commentEl = document.getElementById("comment");
+      const submitBtn = document.getElementById("submitBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const errBox = document.getElementById("errBox");
+      const okBox = document.getElementById("okBox");
+      const statusText = document.getElementById("statusText");
+
+      let rating = 0;
+      let busy = false;
+
+      function setError(msg) {
+        errBox.style.display = msg ? "block" : "none";
+        errBox.textContent = msg || "";
+      }
+      function setOk(msg) {
+        okBox.style.display = msg ? "block" : "none";
+        okBox.textContent = msg || "";
+      }
+      function setBusy(v) {
+        busy = v;
+        submitBtn.disabled = v || rating === 0;
+        statusText.textContent = v ? "送信中..." : "";
+      }
+      function renderStars() {
+        starBtns.forEach(btn => {
+          const s = Number(btn.dataset.star);
+          btn.classList.toggle("on", s <= rating);
+        });
+        scoreText.textContent = rating ? (rating + " / 5") : "未选择";
+        submitBtn.disabled = busy || rating === 0;
+      }
+
+      starBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          rating = Number(btn.dataset.star);
+          setError("");
+          setOk("");
+          renderStars();
+        });
+      });
+
+      resetBtn.addEventListener("click", () => {
+        rating = 0;
+        commentEl.value = "";
+        setError("");
+        setOk("");
+        renderStars();
+      });
+
+      submitBtn.addEventListener("click", async () => {
+        if (!rating || busy) return;
+
+        setError("");
+        setOk("");
+        setBusy(true);
+
+        const payload = {
+          rating,
+          comment: (commentEl.value || "").trim().slice(0, 1000),
+          ref: ref || undefined
+        };
+
+        try {
+          const res = await fetch("/api/feedback", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          let data = null;
+          try { data = await res.json(); } catch (e) {}
+
+          if (!res.ok || !data || !data.ok) {
+            const msg = (data && data.error) ? ("送信失败: " + data.error) : ("送信失败: HTTP " + res.status);
+            setError(msg);
+            setBusy(false);
+            return;
+          }
+
+          // 保存 id 给后续低分页追加详情用
+          if (data.id) sessionStorage.setItem("feedback_id", String(data.id));
+          if (ref) sessionStorage.setItem("feedback_ref", ref);
+
+          const redirect = String(data.redirect || "");
+          if (!redirect) {
+            setOk("送信成功，但未返回跳转地址。");
+            setBusy(false);
+            return;
+          }
+
+          location.href = redirect + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
+        } catch (e) {
+          setError("网络错误或接口不可用。请稍后重试。");
+          setBusy(false);
+        }
+      });
+
+      renderStars();
+    })();
+  </script>
+</body>
 </html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>感谢</title>
+  <style>
+    :root { --bg:#f7f7f8; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --btn:#111827; --btnText:#ffffff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    h1 { margin: 0 0 8px; font-size: 20px; line-height: 1.3; }
+    p { margin: 0 0 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .actions { margin-top: 18px; display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    a.primary { display:inline-block; text-decoration:none; background: var(--btn); color: var(--btnText); padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+    a.secondary { display:inline-block; text-decoration:none; border: 1px solid var(--border); background: #fff; color: var(--text); padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+    .topbar { display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; background: #fff; }
+    .small { font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="badge" id="refBadge">ref: -</div>
+      <div class="small" id="idText"></div>
+    </div>
+
+    <div class="card">
+      <h1>感谢您的评价</h1>
+      <p>已收到提交。感谢您的时间。</p>
+
+      <div class="actions">
+        <!-- 这里可以替换为你的外部评价链接（Google Maps / 食べログ等） -->
+        <a class="primary" href="#" id="externalLink" target="_blank" rel="noopener">去外部平台评价</a>
+        <a class="secondary" href="/index.html" id="backLink">返回评分页</a>
+      </div>
+
+      <p style="margin-top:16px;">如需关闭此页面，可直接关闭浏览器窗口。</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const qs = new URLSearchParams(location.search);
+      const ref = (qs.get("ref") || sessionStorage.getItem("feedback_ref") || "").slice(0, 100);
+      const feedbackId = (sessionStorage.getItem("feedback_id") || "").slice(0, 100);
+
+      document.getElementById("refBadge").textContent = "ref: " + (ref || "-");
+      document.getElementById("idText").textContent = feedbackId ? ("id: " + feedbackId) : "id: -";
+
+      // TODO: 替换为你的外部评价链接
+      const externalUrl = "https://example.com";
+      document.getElementById("externalLink").href = externalUrl;
+
+      const backLink = document.getElementById("backLink");
+      backLink.href = "/index.html" + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
+    })();
+  </script>
+</body>
+</html>
