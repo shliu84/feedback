@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "supermaratan",
+	"name": "feedback",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-02-10",
 	"compatibility_flags": [
@@ -22,7 +22,12 @@
 		{
 			"binding": "DB",
 			"database_name": "reviews",
-			"database_id": "5a236d2c-63a8-4a3f-ae35-b597d8305c32",
+			"database_id": "828a786d-0c9c-42f6-b874-969a6ef4abcc",
+		},
+		{
+			"binding": "reviews",
+			"database_name": "reviews",
+			"database_id": "828a786d-0c9c-42f6-b874-969a6ef4abcc"
 		}
 	]
 	/**

@@ -56,7 +56,7 @@
 		  "INSERT INTO feedback (id, created_at, rating, comment, user_agent, ip_hash, ref) VALUES (?, ?, ?, ?, ?, ?, ?)"
 		).bind(id, created_at, rating, comment, ua, ip_hash, ref).run();
   
-		const redirect = rating <= 3 ? "/sorry.html" : "https://search.google.com/local/writereview?placeid=ChIJjYETarCLGGARlG9qF7BgglE";
+		const redirect = rating <= 3 ? "/sorry.html" : "https://search.google.com/local/writereview?placeid=ChIJlUJ-PwCNGGARrUBK_6NUG90";
   
 		return new Response(JSON.stringify({ ok: true, redirect, id }), {
 		  headers: { "content-type": "application/json" }
