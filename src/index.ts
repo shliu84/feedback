@@ -45,23 +45,29 @@ function escapeHtml(s: string) {
 function renderAdminLogin(error = "") {
   const err = error ? `<p style="color:#b91c1c;margin:0 0 12px 0;">${escapeHtml(error)}</p>` : "";
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Login</title>
-  <style>body{font-family:sans-serif;background:#f7f7f8}main{max-width:420px;margin:48px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px}input{width:100%;padding:10px;margin:8px 0 12px;box-sizing:border-box}button{padding:10px 14px}</style>
-  </head><body><main><h1 style="margin:0 0 12px 0;">Admin Login</h1>${err}
+  <style>body{font-family:sans-serif;background:#f7f7f8}main{max-width:420px;margin:48px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px}input{width:100%;padding:10px;margin:8px 0 12px;box-sizing:border-box}button{padding:10px 14px;background:#111827;color:#fff;border:none;border-radius:6px;cursor:pointer;}</style>
+  </head><body><main><h1 style="margin:0 0 12px 0;">ç®¡ç†ç”»é¢ãƒ­ã‚°ã‚¤ãƒ³</h1>${err}
   <form method="post" action="/admin/login">
-  <label>ÕËºÅ</label><input name="user" autocomplete="username" />
-  <label>ÃÜÂë</label><input name="pass" type="password" autocomplete="current-password" />
-  <button type="submit">µÇÂ¼</button>
+  <label>ã‚¢ã‚«ã‚¦ãƒ³ãƒˆ</label><input name="user" autocomplete="username" />
+  <label>ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰</label><input name="pass" type="password" autocomplete="current-password" />
+  <button type="submit">ãƒ­ã‚°ã‚¤ãƒ³</button>
   </form></main></body></html>`;
 }
 
 function renderAdmin(rows: any[]) {
+  function formatTagValue(value: unknown) {
+    const raw = String(value ?? "");
+    const colonIndex = raw.search(/[:ï¼š]/);
+    return escapeHtml(colonIndex >= 0 ? raw.slice(colonIndex + 1) : raw);
+  }
+
   const trs = rows.map((r) => {
     let tagCols = ["", "", "", "", ""];
     if (r.tags_json) {
       try {
         const parsed = JSON.parse(String(r.tags_json));
         if (Array.isArray(parsed)) {
-          tagCols = parsed.slice(0, 5).map((v: unknown) => escapeHtml(String(v ?? "")));
+          tagCols = parsed.slice(0, 5).map(formatTagValue);
           while (tagCols.length < 5) tagCols.push("");
         }
       } catch (_) {}
@@ -81,11 +87,13 @@ function renderAdmin(rows: any[]) {
   }).join("");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>Feedback Admin</title>
-  <style>body{font-family:sans-serif}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px;vertical-align:top}</style>
+  <style>body{font-family:sans-serif;background:#f7f7f8;padding:20px;}table{border-collapse:collapse;width:100%;background:#fff;}td,th{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#eee;}button{padding:8px 12px;background:#b91c1c;color:#fff;border:none;border-radius:4px;cursor:pointer;}</style>
   </head><body>
-  <h1>Feedback</h1>
-  <form method="post" action="/admin/logout" style="margin:0 0 12px 0;"><button type="submit">ÍË³öµÇÂ¼</button></form>
-  <table><thead><tr><th>created_at</th><th>rating</th><th>ĞÔ±ğ</th><th>ºÍË­À´</th><th>ÈçºÎÖªµÀÎÒÃÇ</th><th>ËµÃ÷ÆÀ·Ö</th><th>½Ó´ıÆÀ·Ö</th><th>detail</th><th>id</th></tr></thead>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h1 style="margin:0;">ãƒ•ã‚£ãƒ¼ãƒ‰ãƒãƒƒã‚¯ç®¡ç†</h1>
+    <form method="post" action="/admin/logout" style="margin:0;"><button type="submit">ãƒ­ã‚°ã‚¢ã‚¦ãƒˆ</button></form>
+  </div>
+  <table><thead><tr><th>ä½œæˆæ—¥æ™‚</th><th>è©•ä¾¡</th><th>æ€§åˆ¥</th><th>èª°ã¨</th><th>æ¤œç´¢çµŒè·¯</th><th>èª¬æ˜</th><th>å¯¾å¿œ</th><th>è©³ç´°å†…å®¹</th><th>ID</th></tr></thead>
   <tbody>${trs}</tbody></table>
   </body></html>`;
 }
@@ -167,7 +175,7 @@ export default {
       const user = typeof form?.get("user") === "string" ? String(form?.get("user")) : "";
       const pass = typeof form?.get("pass") === "string" ? String(form?.get("pass")) : "";
       if (user !== env.ADMIN_USER || pass !== env.ADMIN_PASS) {
-        return new Response(renderAdminLogin("ÕËºÅ»òÃÜÂë´íÎó"), { headers: { "content-type": "text/html; charset=utf-8" } });
+        return new Response(renderAdminLogin("ã‚¢ã‚«ã‚¦ãƒ³ãƒˆã¾ãŸã¯ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ãŒé–“é•ã£ã¦ã„ã¾ã™ã€‚"), { headers: { "content-type": "text/html; charset=utf-8" } });
       }
 
       const token = await makeAdminSession(user, env.ADMIN_PASS);
