@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>满意度调查</title>
+  <title>サービス満足度アンケート</title>
   <style>
     :root { --bg:#f7f7f8; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --btn:#111827; --btnText:#ffffff; }
     * { box-sizing: border-box; }
@@ -41,38 +41,30 @@
     </div>
 
     <div class="card">
-      <h1>请对本次服务进行评价</h1>
-      <p>请选择 1~5 星并点击「送信」。</p>
+      <h1>今回のサービスについてご評価をお願いします</h1>
+      <p>1〜5つの星を選択し、「送信」をクリックしてください。</p>
 
       <div class="row">
-        <label>评分（必填）</label>
+        <label>評価（必須）</label>
         <div class="stars" role="radiogroup" aria-label="rating">
           <button class="starBtn" data-star="1" aria-label="1 star" type="button">★</button>
           <button class="starBtn" data-star="2" aria-label="2 stars" type="button">★</button>
           <button class="starBtn" data-star="3" aria-label="3 stars" type="button">★</button>
           <button class="starBtn" data-star="4" aria-label="4 stars" type="button">★</button>
           <button class="starBtn" data-star="5" aria-label="5 stars" type="button">★</button>
-          <span class="scoreText" id="scoreText">未选择</span>
+          <span class="scoreText" id="scoreText">未選択</span>
         </div>
-        <!-- <div class="hint">提示：如需按门店/渠道统计，可在 URL 加上 ?ref=xxx</div> -->
       </div>
-
-      <!-- <div class="row">
-        <label for="comment">补充说明（可选）</label>
-        <textarea id="comment" maxlength="1000" placeholder="可填写原因、建议或问题描述（最多1000字）"></textarea>
-      </div> -->
 
       <div class="actions">
         <button class="primary" id="submitBtn" disabled type="button">送信</button>
-        <button class="secondary" id="resetBtn" type="button">重置</button>
+        <button class="secondary" id="resetBtn" type="button">リセット</button>
       </div>
 
       <div class="err" id="errBox"></div>
       <div class="ok" id="okBox"></div>
 
-      <div class="footer">
-        提交后会跳转页面。若网络错误，将提示重试。
-      </div>
+      <div class="footer">送信後にページが遷移します。ネットワークエラーの場合は再試行のメッセージが表示されます。</div>
     </div>
   </div>
 
@@ -80,12 +72,14 @@
     (function () {
       const qs = new URLSearchParams(location.search);
       const ref = (qs.get("ref") || "").slice(0, 100);
+      
       const refBadge = document.getElementById("refBadge");
-      refBadge.textContent = "ref: " + (ref || "-");
-
+      if(refBadge) {
+          refBadge.textContent = "ref: " + (ref || "-");
+      }
+      
       const starBtns = Array.from(document.querySelectorAll(".starBtn"));
       const scoreText = document.getElementById("scoreText");
-      // const commentEl = document.getElementById("comment");
       const submitBtn = document.getElementById("submitBtn");
       const resetBtn = document.getElementById("resetBtn");
       const errBox = document.getElementById("errBox");
@@ -95,90 +89,46 @@
       let rating = 0;
       let busy = false;
 
-      function setError(msg) {
-        errBox.style.display = msg ? "block" : "none";
-        errBox.textContent = msg || "";
-      }
-      function setOk(msg) {
-        okBox.style.display = msg ? "block" : "none";
-        okBox.textContent = msg || "";
-      }
-      function setBusy(v) {
-        busy = v;
-        submitBtn.disabled = v || rating === 0;
-        statusText.textContent = v ? "送信中..." : "";
-      }
+      function setError(msg) { errBox.style.display = msg ? "block" : "none"; errBox.textContent = msg || ""; }
+      function setOk(msg) { okBox.style.display = msg ? "block" : "none"; okBox.textContent = msg || ""; }
+      function setBusy(v) { busy = v; submitBtn.disabled = v || rating === 0; statusText.textContent = v ? "送信中..." : ""; }
       function renderStars() {
-        starBtns.forEach(btn => {
-          const s = Number(btn.dataset.star);
-          btn.classList.toggle("on", s <= rating);
-        });
-        scoreText.textContent = rating ? (rating + " / 5") : "未选择";
+        starBtns.forEach(btn => btn.classList.toggle("on", Number(btn.dataset.star) <= rating));
+        scoreText.textContent = rating ? (rating + " / 5") : "未選択";
         submitBtn.disabled = busy || rating === 0;
       }
 
-      starBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-          rating = Number(btn.dataset.star);
-          setError("");
-          setOk("");
-          renderStars();
-        });
-      });
-
-      resetBtn.addEventListener("click", () => {
-        rating = 0;
-        // commentEl.value = "";
-        setError("");
-        setOk("");
-        renderStars();
-      });
+      starBtns.forEach(btn => btn.addEventListener("click", () => { rating = Number(btn.dataset.star); setError(""); setOk(""); renderStars(); }));
+      resetBtn.addEventListener("click", () => { rating = 0; setError(""); setOk(""); renderStars(); });
 
       submitBtn.addEventListener("click", async () => {
         if (!rating || busy) return;
-
-        setError("");
-        setOk("");
-        setBusy(true);
-
-        const payload = {
-          rating,
-          // comment: (commentEl.value || "").trim().slice(0, 1000),
-          ref: ref || undefined
-        };
-
+        setError(""); setOk(""); setBusy(true);
         try {
-          const res = await fetch("/api/feedback", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-
-          let data = null;
+          const res = await fetch("/api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ rating, ref: ref || undefined }) });
+          let data = null; 
           try { data = await res.json(); } catch (e) {}
-
-          if (!res.ok || !data || !data.ok) {
-            const msg = (data && data.error) ? ("送信失败: " + data.error) : ("送信失败: HTTP " + res.status);
-            setError(msg);
-            setBusy(false);
-            return;
+          
+          if (!res.ok || !data || !data.ok) { 
+            setError((data && data.error) ? ("送信失敗: " + data.error) : ("送信失敗: HTTP " + res.status)); 
+            setBusy(false); 
+            return; 
           }
-
-          // 保存 id 给后续低分页追加详情用
+          
           if (data.id) sessionStorage.setItem("feedback_id", String(data.id));
           if (ref) sessionStorage.setItem("feedback_ref", ref);
-
+          
           const redirect = String(data.redirect || "");
-          if (!redirect) {
-            setOk("送信成功，但未返回跳转地址。");
-            setBusy(false);
-            return;
+          if (!redirect) { 
+            setOk("送信に成功しましたが、リダイレクト先がありません。"); 
+            setBusy(false); 
+            return; 
           }
-
+          
           location.href = redirect + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
-        } catch (e) {
-          setError("网络错误或接口不可用。请稍后重试。");
-          setBusy(false);
+        } catch (e) { 
+          setError("ネットワークエラー、またはインターフェースが利用できません。後でもう一度お試しください。"); 
+          setBusy(false); 
         }
       });
 

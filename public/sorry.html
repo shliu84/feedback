@@ -1,180 +1,323 @@
-<!doctype html>
-<html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>问题反馈</title>
-  <style>
-    :root { --bg:#f7f7f8; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --btn:#111827; --btnText:#ffffff; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
-    h1 { margin: 0 0 8px; font-size: 20px; line-height: 1.3; }
-    p { margin: 0 0 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
-    .row { margin-top: 14px; }
-    label { display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    textarea, input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none; background: #fff; }
-    textarea { min-height: 120px; resize: vertical; }
-    textarea:focus, input:focus { border-color: #c7cbd1; }
-    .chips { display:flex; flex-wrap: wrap; gap:8px; }
-    .chip { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
-    .chip.on { border-color: #111827; }
-    .actions { margin-top: 18px; display:flex; gap:10px; align-items:center; }
-    button.primary { border:0; background: var(--btn); color: var(--btnText); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; }
-    button.primary:disabled { opacity: .55; cursor: not-allowed; }
-    button.secondary { border: 1px solid var(--border); background: #fff; color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; }
-    .err { margin-top: 12px; font-size: 13px; color: #b91c1c; display:none; }
-    .ok { margin-top: 12px; font-size: 13px; color: #065f46; display:none; }
-    .topbar { display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; background: #fff; }
-    .small { font-size: 12px; color: var(--muted); }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>アンケートフォーム</title>
+    <style>
+        /* 全局基础设置与居中背景 */
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* 表单容器：卡片化设计 */
+        #surveyForm {
+            background: #ffffff;
+            width: 100%;
+            max-width: 500px; /* 限制最大宽度，电脑端不会拉伸太难看 */
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 15px;
+        }
+
+        /* 表单每项的间距 */
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group p {
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #4a5568;
+        }
+
+        /* 必填标签美化 */
+        .required::after {
+            content: "必須";
+            background-color: #ff4f19;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 3px 8px;
+            margin-left: 8px;
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: text-bottom;
+            line-height: 1;
+        }
+
+        /* 下拉菜单和输入框美化 */
+        select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            background-color: #fbfbfc;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-family: inherit;
+            color: #2d3748;
+        }
+
+        /* 自定义下拉菜单箭头，覆盖原生丑陋的样式 */
+        select {
+            appearance: none; 
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        /* 获取焦点时的发光效果 */
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+            background-color: #fff;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical; /* 允许纵向拉伸，禁止横向 */
+        }
+
+        /* 错误提示样式优化 */
+        .error {
+            background-color: #fff5f5 !important;
+            border-color: #fc8181 !important;
+        }
+
+        /* 提交按钮美化 */
+        #submitBtn {
+            width: 100%;
+            background-color: #ff4f19; /* 颜色呼应 required 标签 */
+            color: #fff;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+
+        #submitBtn:hover {
+            background-color: #e03c05;
+        }
+
+        #submitBtn:active {
+            transform: scale(0.98);
+        }
+
+        #submitBtn:disabled {
+            background-color: #cbd5e0;
+            cursor: not-allowed;
+            color: #718096;
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="badge" id="refBadge">ref: -</div>
-      <div class="small" id="idText"></div>
-    </div>
-
-    <div class="card">
-      <h1>问题反馈</h1>
-      <p>请补充具体问题。此页面用于内部改进，不会公开展示。</p>
-
-      <div class="row">
-        <label>问题类型（可多选）</label>
-        <div class="chips" id="chips">
-          <button class="chip" type="button" data-v="服务态度">服务态度</button>
-          <button class="chip" type="button" data-v="等待时间">等待时间</button>
-          <button class="chip" type="button" data-v="品质/内容">品质/内容</button>
-          <button class="chip" type="button" data-v="价格">价格</button>
-          <button class="chip" type="button" data-v="环境">环境</button>
-          <button class="chip" type="button" data-v="其他">其他</button>
+    <form id="surveyForm">
+        <h2>ご意見をお聞かせください</h2>
+        
+        <div class="form-group">
+            <p class="required">Q.性別を教えてください</p>
+            <select name="性別" class="error" required>
+                <option value="" selected>----</option>
+                <option value="男性">男性</option>
+                <option value="女性">女性</option>
+                <option value="回答しない">回答しない</option>
+            </select>
         </div>
-      </div>
+        
+        <div class="form-group">
+            <p class="required">Q.本日はどなたと利用されましたか？</p>
+            <select name="誰と" class="error" required>
+                <option value="" selected>----</option>
+                <option value="友達と">友達と</option>
+                <option value="恋人と">恋人と</option>
+                <option value="家族と">家族と</option>
+                <option value="会社の仲間と">会社の仲間と</option>
+                <option value="一人で">一人で</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <p class="required">Q.当店を何で知りましたか？</p>
+            <select name="検索経路" class="error" required>
+                <option value="" selected>----</option>
+                <option value="google">Google</option>
+                <option value="Yahoo!">Yahoo!</option>
+                <option value="SNS">SNS</option>
+                <option value="マップ">マップ</option>
+                <option value="通りがかり">通りがかり</option>
+                <option value="チラシ・はがき">チラシ・はがき</option>
+                <option value="ポータルサイト">ポータルサイト</option>
+                <option value="家族/知人">家族/知人からの紹介</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <p class="required">Q.スタッフの説明はいかがでしたか？</p>
+            <select name="説明" class="error" required>
+                <option value="" selected>----</option>
+                <option value="5">5（とても分かりやすかった）</option>
+                <option value="4">4（分かりやすかった）</option>
+                <option value="3">3（普通だった）</option>
+                <option value="2">2（やや分かりづらかった）</option>
+                <option value="1">1（分かりづらかった）</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <p class="required">Q.スタッフの対応はいかがでしたか？</p>
+            <select name="対応" class="error" required>
+                <option value="" selected>----</option>
+                <option value="5">5（とても良かった）</option>
+                <option value="4">4（良かった）</option>
+                <option value="3">3（普通だった）</option>
+                <option value="2">2（悪かった）</option>
+                <option value="1">1（とても悪かった）</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <p>Q.その他、何かございましたらお聞かせください</p>
+            <textarea name="ご意見" placeholder="ご自由にご記入ください..."></textarea>
+        </div>
+        
+        <input type="submit" id="submitBtn" value="送信">
+    </form>
 
-      <div class="row">
-        <label for="detail">详细说明（建议填写）</label>
-        <textarea id="detail" maxlength="2000" placeholder="请描述发生了什么，以及希望如何改进（最多2000字）"></textarea>
-      </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var requiredFields = document.querySelectorAll('[required]');
+            // 实时清除错误红色背景
+            requiredFields.forEach(function(field) {
+                field.addEventListener('input', function() {
+                    if (field.value.trim() !== "") {
+                        field.classList.remove('error');
+                    } else {
+                        field.classList.add('error');
+                    }
+                });
+            });
+        });
 
-      <div class="row">
-        <label for="contact">联系方式（可选）</label>
-        <input id="contact" maxlength="200" placeholder="邮箱/电话/微信号（可选）" />
-      </div>
+        document.getElementById('surveyForm').addEventListener('submit', async function(event) {
+            // 阻止表单的默认跳转行为
+            event.preventDefault();
 
-      <div class="actions">
-        <button class="primary" id="sendBtn" type="button">提交反馈</button>
-        <button class="secondary" id="backBtn" type="button">返回评分页</button>
-      </div>
+            var requiredFields = document.querySelectorAll('[required]');
+            var isValid = true;
+            
+            // 校验必填项
+            requiredFields.forEach(function(field) {
+                if (!field.value.trim()) {
+                    field.classList.add('error');
+                    isValid = false;
+                } else {
+                    field.classList.remove('error');
+                }
+            });
 
-      <div class="err" id="errBox"></div>
-      <div class="ok" id="okBox"></div>
+            if (!isValid) {
+                alert('必須項目を全て入力してください。');
+                return;
+            }
 
-      <div class="small" style="margin-top:14px;">
-        说明：该页面可直接展示，也可在提交成功后再跳转到 /thanks.html。
-      </div>
-    </div>
-  </div>
+            // 获取反馈 ID 和 Ref 参数 (复用你的逻辑)
+            const qs = new URLSearchParams(location.search);
+            const ref = (qs.get("ref") || sessionStorage.getItem("feedback_ref") || "").slice(0, 100);
+            const feedbackId = (sessionStorage.getItem("feedback_id") || "").slice(0, 100);
 
-  <script>
-    (function () {
-      const qs = new URLSearchParams(location.search);
-      const ref = (qs.get("ref") || sessionStorage.getItem("feedback_ref") || "").slice(0, 100);
-      const feedbackId = (sessionStorage.getItem("feedback_id") || "").slice(0, 100);
+            if (!feedbackId) {
+                alert("缺少 feedback_id");
+                return;
+            }
 
-      document.getElementById("refBadge").textContent = "ref: " + (ref || "-");
-      document.getElementById("idText").textContent = feedbackId ? ("id: " + feedbackId) : "id: -";
+            // 防抖：禁用按钮
+            const submitBtn = document.getElementById("submitBtn");
+            const originalBtnText = submitBtn.value;
+            submitBtn.disabled = true;
+            submitBtn.value = "送信中...";
 
-      const chipsWrap = document.getElementById("chips");
-      const detailEl = document.getElementById("detail");
-      const contactEl = document.getElementById("contact");
-      const sendBtn = document.getElementById("sendBtn");
-      const backBtn = document.getElementById("backBtn");
-      const errBox = document.getElementById("errBox");
-      const okBox = document.getElementById("okBox");
+            // 将表单数据组装成你的 API 需要的格式
+            const formElements = event.target.elements;
+            const tags = [
+                "性別:" + formElements["性別"].value,
+                "誰と:" + formElements["誰と"].value,
+                "検索経路:" + formElements["検索経路"].value,
+                "説明:" + formElements["説明"].value,
+                "対応:" + formElements["対応"].value
+            ];
+            const detail = formElements["ご意見"].value.trim().slice(0, 2000);
+            
+            const payload = {
+                id: feedbackId,
+                tags: tags,
+                detail: detail,
+                contact: "", // 日文表单没提供联系方式，留空
+                ref: ref || undefined
+            };
 
-      let busy = false;
-      const selected = new Set();
+            // 发送到你的后端
+            try {
+                const res = await fetch("/api/feedback_detail", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
 
-      function setError(msg) {
-        errBox.style.display = msg ? "block" : "none";
-        errBox.textContent = msg || "";
-      }
-      function setOk(msg) {
-        okBox.style.display = msg ? "block" : "none";
-        okBox.textContent = msg || "";
-      }
-      function setBusy(v) {
-        busy = v;
-        sendBtn.disabled = v;
-        sendBtn.textContent = v ? "提交中..." : "提交反馈";
-      }
+                let data = null;
+                try { data = await res.json(); } catch (e) {}
 
-      chipsWrap.addEventListener("click", (e) => {
-        const btn = e.target.closest(".chip");
-        if (!btn) return;
-        const v = String(btn.dataset.v || "");
-        if (!v) return;
-        if (selected.has(v)) selected.delete(v); else selected.add(v);
-        btn.classList.toggle("on", selected.has(v));
-      });
+                if (!res.ok || !data || !data.ok) {
+                    alert((data && data.error) ? ("提交失败: " + data.error) : ("提交失败: HTTP " + res.status));
+                    submitBtn.disabled = false;
+                    submitBtn.value = originalBtnText;
+                    return;
+                }
 
-      backBtn.addEventListener("click", () => {
-        location.href = "/index.html" + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
-      });
+                alert('送信成功！'); // 提交成功提示
+                
+                // 提交成功后的动作，比如重定向，你可以自己改
+                location.href = "/thanks.html" + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
 
-      // 可选接口：/api/feedback_detail
-      // 请求 JSON：{ id, tags:[], detail, contact }
-      sendBtn.addEventListener("click", async () => {
-        if (busy) return;
-
-        setError("");
-        setOk("");
-
-        const detail = (detailEl.value || "").trim().slice(0, 2000);
-        const contact = (contactEl.value || "").trim().slice(0, 200);
-        const tags = Array.from(selected).slice(0, 10);
-
-        if (!feedbackId) {
-          setError("缺少 feedback_id。请从评分页正常提交后进入此页面。");
-          return;
-        }
-        if (!detail && tags.length === 0) {
-          setError("请至少选择问题类型或填写详细说明。");
-          return;
-        }
-
-        setBusy(true);
-        try {
-          const res = await fetch("/api/feedback_detail", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ id: feedbackId, tags, detail, contact, ref: ref || undefined })
-          });
-
-          let data = null;
-          try { data = await res.json(); } catch (e) {}
-
-          if (!res.ok || !data || !data.ok) {
-            const msg = (data && data.error) ? ("提交失败: " + data.error) : ("提交失败: HTTP " + res.status);
-            setError(msg);
-            setBusy(false);
-            return;
-          }
-
-          setOk("提交成功。");
-          setBusy(false);
-
-          // 可选：提交成功后跳转
-          // location.href = "/thanks.html" + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
-        } catch (e) {
-          setError("网络错误或接口不可用。请稍后重试。");
-          setBusy(false);
-        }
-      });
-    })();
-  </script>
+            } catch (e) {
+                alert("网络错误或接口不可用。请稍后重试。");
+                submitBtn.disabled = false;
+                submitBtn.value = originalBtnText;
+            }
+        });
+    </script>
 </body>
 </html>
