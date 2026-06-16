@@ -4,6 +4,9 @@ export interface Env {
   ADMIN_PASS: string;
 }
 
+export const YASURAGI_STORE_NAME = "三田和食酒場 やすらぎ";
+export const YASURAGI_REVIEW_URL = "https://tabelog.onelink.me/kcDZ?af_dp=tabelog-v2://login?restaurant_id=13300381";
+
 function uuid() {
   return crypto.randomUUID();
 }
@@ -44,9 +47,9 @@ function escapeHtml(s: string) {
 
 function renderAdminLogin(error = "") {
   const err = error ? `<p style="color:#b91c1c;margin:0 0 12px 0;">${escapeHtml(error)}</p>` : "";
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Login</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${YASURAGI_STORE_NAME} Admin Login</title>
   <style>body{font-family:sans-serif;background:#f7f7f8}main{max-width:420px;margin:48px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px}input{width:100%;padding:10px;margin:8px 0 12px;box-sizing:border-box}button{padding:10px 14px;background:#111827;color:#fff;border:none;border-radius:6px;cursor:pointer;}</style>
-  </head><body><main><h1 style="margin:0 0 12px 0;">管理画面ログイン</h1>${err}
+  </head><body><main><h1 style="margin:0 0 12px 0;">${YASURAGI_STORE_NAME}<br>管理画面ログイン</h1>${err}
   <form method="post" action="/admin/login">
   <label>アカウント</label><input name="user" autocomplete="username" />
   <label>パスワード</label><input name="pass" type="password" autocomplete="current-password" />
@@ -86,14 +89,14 @@ function renderAdmin(rows: any[]) {
     </tr>`;
   }).join("");
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Feedback Admin</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${YASURAGI_STORE_NAME} Feedback Admin</title>
   <style>body{font-family:sans-serif;background:#f7f7f8;padding:20px;}table{border-collapse:collapse;width:100%;background:#fff;}td,th{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#eee;}button{padding:8px 12px;background:#b91c1c;color:#fff;border:none;border-radius:4px;cursor:pointer;}</style>
   </head><body>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h1 style="margin:0;">フィードバック管理</h1>
+    <h1 style="margin:0;">${YASURAGI_STORE_NAME} フィードバック管理</h1>
     <form method="post" action="/admin/logout" style="margin:0;"><button type="submit">ログアウト</button></form>
   </div>
-  <table><thead><tr><th>作成日時</th><th>評価</th><th>性別</th><th>誰と</th><th>検索経路</th><th>説明</th><th>対応</th><th>詳細内容</th><th>ID</th></tr></thead>
+  <table><thead><tr><th>作成日時</th><th>評価</th><th>性別</th><th>利用シーン</th><th>来店きっかけ</th><th>料理</th><th>接客</th><th>詳細内容</th><th>ID</th></tr></thead>
   <tbody>${trs}</tbody></table>
   </body></html>`;
 }
@@ -127,7 +130,7 @@ export default {
         .bind(id, created_at, rating, ua, ip_hash, ref)
         .run();
 
-      const redirect = rating <= 3 ? "/sorry.html" : "https://search.google.com/local/writereview?placeid=ChIJlUJ-PwCNGGARrUBK_6NUG90";
+      const redirect = rating <= 3 ? "/sorry.html" : YASURAGI_REVIEW_URL;
       return new Response(JSON.stringify({ ok: true, redirect, id }), { headers: { "content-type": "application/json" } });
     }
 

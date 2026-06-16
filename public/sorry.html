@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>アンケートフォーム</title>
+    <title>三田和食酒場 やすらぎ アンケートフォーム</title>
     <style>
         /* 全局基础设置与居中背景 */
         body {
@@ -144,7 +144,7 @@
 </head>
 <body>
     <form id="surveyForm">
-        <h2>ご意見をお聞かせください</h2>
+        <h2>三田和食酒場 やすらぎへのご意見をお聞かせください</h2>
         
         <div class="form-group">
             <p class="required">Q.性別を教えてください</p>
@@ -157,8 +157,8 @@
         </div>
         
         <div class="form-group">
-            <p class="required">Q.本日はどなたと利用されましたか？</p>
-            <select name="誰と" class="error" required>
+            <p class="required">Q.本日はどなたとご利用されましたか？</p>
+            <select name="利用シーン" class="error" required>
                 <option value="" selected>----</option>
                 <option value="友達と">友達と</option>
                 <option value="恋人と">恋人と</option>
@@ -171,7 +171,7 @@
         
         <div class="form-group">
             <p class="required">Q.当店を何で知りましたか？</p>
-            <select name="検索経路" class="error" required>
+            <select name="来店きっかけ" class="error" required>
                 <option value="" selected>----</option>
                 <option value="google">Google</option>
                 <option value="Yahoo!">Yahoo!</option>
@@ -186,20 +186,20 @@
         </div>
         
         <div class="form-group">
-            <p class="required">Q.スタッフの説明はいかがでしたか？</p>
-            <select name="説明" class="error" required>
+            <p class="required">Q.お料理はいかがでしたか？</p>
+            <select name="料理" class="error" required>
                 <option value="" selected>----</option>
-                <option value="5">5（とても分かりやすかった）</option>
-                <option value="4">4（分かりやすかった）</option>
-                <option value="3">3（普通だった）</option>
-                <option value="2">2（やや分かりづらかった）</option>
-                <option value="1">1（分かりづらかった）</option>
+                <option value="5">5（とても満足）</option>
+                <option value="4">4（満足）</option>
+                <option value="3">3（普通）</option>
+                <option value="2">2（やや不満）</option>
+                <option value="1">1（不満）</option>
             </select>
         </div>
         
         <div class="form-group">
-            <p class="required">Q.スタッフの対応はいかがでしたか？</p>
-            <select name="対応" class="error" required>
+            <p class="required">Q.スタッフの接客はいかがでしたか？</p>
+            <select name="接客" class="error" required>
                 <option value="" selected>----</option>
                 <option value="5">5（とても良かった）</option>
                 <option value="4">4（良かった）</option>
@@ -260,7 +260,7 @@
             const feedbackId = (sessionStorage.getItem("feedback_id") || "").slice(0, 100);
 
             if (!feedbackId) {
-                alert("缺少 feedback_id");
+                alert("受付IDが見つかりません。最初の評価ページから送信してください。");
                 return;
             }
 
@@ -274,10 +274,10 @@
             const formElements = event.target.elements;
             const tags = [
                 "性別:" + formElements["性別"].value,
-                "誰と:" + formElements["誰と"].value,
-                "検索経路:" + formElements["検索経路"].value,
-                "説明:" + formElements["説明"].value,
-                "対応:" + formElements["対応"].value
+                "利用シーン:" + formElements["利用シーン"].value,
+                "来店きっかけ:" + formElements["来店きっかけ"].value,
+                "料理:" + formElements["料理"].value,
+                "接客:" + formElements["接客"].value
             ];
             const detail = formElements["ご意見"].value.trim().slice(0, 2000);
             
@@ -301,19 +301,19 @@
                 try { data = await res.json(); } catch (e) {}
 
                 if (!res.ok || !data || !data.ok) {
-                    alert((data && data.error) ? ("提交失败: " + data.error) : ("提交失败: HTTP " + res.status));
+                    alert((data && data.error) ? ("送信失敗: " + data.error) : ("送信失敗: HTTP " + res.status));
                     submitBtn.disabled = false;
                     submitBtn.value = originalBtnText;
                     return;
                 }
 
-                alert('送信成功！'); // 提交成功提示
+                alert('送信成功！');
                 
                 // 提交成功后的动作，比如重定向，你可以自己改
                 location.href = "/thanks.html" + (ref ? ("?ref=" + encodeURIComponent(ref)) : "");
 
             } catch (e) {
-                alert("网络错误或接口不可用。请稍后重试。");
+                alert("ネットワークエラー、またはインターフェースが利用できません。後でもう一度お試しください。");
                 submitBtn.disabled = false;
                 submitBtn.value = originalBtnText;
             }
