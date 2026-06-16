@@ -21,13 +21,13 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "reviews",
-			"database_id": "828a786d-0c9c-42f6-b874-969a6ef4abcc",
+			"database_name": "yasuragi-feedback",
+			"database_id": "d5e89c27-ce22-4ffe-9487-d2ebce9c993a",
 		},
 		{
 			"binding": "reviews",
-			"database_name": "reviews",
-			"database_id": "828a786d-0c9c-42f6-b874-969a6ef4abcc"
+			"database_name": "yasuragi-feedback",
+			"database_id": "d5e89c27-ce22-4ffe-9487-d2ebce9c993a"
 		}
 	]
 	/**
