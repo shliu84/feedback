@@ -2,6 +2,9 @@ export interface Env {
   DB: D1Database;
   ADMIN_USER: string;
   ADMIN_PASS: string;
+  RESEND_API_KEY?: string;
+  FEEDBACK_EMAIL_FROM?: string;
+  FEEDBACK_EMAIL_TO?: string;
 }
 
 export const YASURAGI_STORE_NAME = "三田和食酒場 やすらぎ";
@@ -43,6 +46,114 @@ async function verifyAdminSession(token: string, user: string, secret: string) {
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
+function formatTagForEmail(value: string) {
+  const colonIndex = value.search(/[:：]/);
+  if (colonIndex < 0) return value;
+  return `${value.slice(0, colonIndex)}: ${value.slice(colonIndex + 1)}`;
+}
+
+function buildLowRatingEmail(input: {
+  id: string;
+  rating: number;
+  feedbackCreatedAt: string;
+  detailCreatedAt: string;
+  tags: string[];
+  detail: string;
+  contact: string;
+  ref: string | null;
+  adminUrl: string;
+}) {
+  const tagLines = input.tags.length ? input.tags.map(formatTagForEmail) : ["-"];
+  const textLines = [
+    `${YASURAGI_STORE_NAME}で低評価フィードバックを受信しました。`,
+    "",
+    `評価: ${input.rating} / 5`,
+    `受付ID: ${input.id}`,
+    `評価日時: ${input.feedbackCreatedAt || "-"}`,
+    `詳細送信日時: ${input.detailCreatedAt}`,
+    `参照: ${input.ref || "-"}`,
+    `連絡先: ${input.contact || "-"}`,
+    `管理画面: ${input.adminUrl}`,
+    "",
+    "回答内容:",
+    ...tagLines,
+    "",
+    "詳細内容:",
+    input.detail || "-",
+  ];
+
+  const htmlRows = [
+    ["評価", `${input.rating} / 5`],
+    ["受付ID", input.id],
+    ["評価日時", input.feedbackCreatedAt || "-"],
+    ["詳細送信日時", input.detailCreatedAt],
+    ["参照", input.ref || "-"],
+    ["連絡先", input.contact || "-"],
+  ].map(([label, value]) => `<tr><th style="text-align:left;padding:6px 10px;border:1px solid #ddd;background:#f7f7f8;">${escapeHtml(label)}</th><td style="padding:6px 10px;border:1px solid #ddd;">${escapeHtml(value)}</td></tr>`).join("");
+
+  const htmlTags = tagLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("");
+
+  return {
+    subject: `【${YASURAGI_STORE_NAME}】低評価フィードバックを受信しました`,
+    text: textLines.join("\n"),
+    html: `<!doctype html>
+<html lang="ja">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;color:#111827;">
+  <h1 style="font-size:18px;margin:0 0 12px;">${escapeHtml(YASURAGI_STORE_NAME)} 低評価フィードバック</h1>
+  <p>低評価フィードバックを受信しました。</p>
+  <table style="border-collapse:collapse;margin:12px 0;">${htmlRows}</table>
+  <h2 style="font-size:16px;margin:18px 0 8px;">回答内容</h2>
+  <ul>${htmlTags}</ul>
+  <h2 style="font-size:16px;margin:18px 0 8px;">詳細内容</h2>
+  <p style="white-space:pre-wrap;border:1px solid #ddd;padding:10px;background:#fafafa;">${escapeHtml(input.detail || "-")}</p>
+  <p><a href="${escapeHtml(input.adminUrl)}">管理画面を開く</a></p>
+</body>
+</html>`,
+  };
+}
+
+async function sendLowRatingFeedbackEmail(env: Env, req: Request, input: {
+  id: string;
+  rating: number;
+  feedbackCreatedAt: string;
+  detailCreatedAt: string;
+  tags: string[];
+  detail: string;
+  contact: string;
+  ref: string | null;
+}) {
+  if (!env.RESEND_API_KEY || !env.FEEDBACK_EMAIL_FROM || !env.FEEDBACK_EMAIL_TO) return;
+
+  const to = env.FEEDBACK_EMAIL_TO.split(",").map((value) => value.trim()).filter(Boolean).slice(0, 50);
+  if (!to.length) return;
+
+  const adminUrl = new URL("/admin", req.url).toString();
+  const email = buildLowRatingEmail({ ...input, adminUrl });
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      from: env.FEEDBACK_EMAIL_FROM,
+      to,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+      headers: {
+        "Idempotency-Key": `feedback-${input.id}`,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const message = await res.text().catch(() => "");
+    throw new Error(`Resend email failed: ${res.status} ${message.slice(0, 500)}`);
+  }
 }
 
 function renderAdminLogin(error = "") {
@@ -102,7 +213,7 @@ function renderAdmin(rows: any[]) {
 }
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
 
     if (url.pathname === "/api/feedback" && req.method === "POST") {
@@ -165,6 +276,29 @@ export default {
       await env.DB.prepare("INSERT OR REPLACE INTO feedback_detail (feedback_id, created_at, tags_json, detail, contact, ref) VALUES (?, ?, ?, ?, ?, ?)")
         .bind(feedback_id, created_at, tags_json, detail || null, contact || null, ref)
         .run();
+
+      const feedback = await env.DB.prepare("SELECT rating, created_at FROM feedback WHERE id = ?")
+        .bind(feedback_id)
+        .first<{ rating: number; created_at: string }>();
+      const rating = Number(feedback?.rating);
+
+      if (Number.isInteger(rating) && rating <= 3) {
+        const emailPromise = sendLowRatingFeedbackEmail(env, req, {
+          id: feedback_id,
+          rating,
+          feedbackCreatedAt: String(feedback?.created_at || ""),
+          detailCreatedAt: created_at,
+          tags: cleanTags,
+          detail,
+          contact,
+          ref,
+        }).catch((error) => {
+          console.error("Failed to send low-rating feedback email", error);
+        });
+
+        if (ctx) ctx.waitUntil(emailPromise);
+        else await emailPromise;
+      }
 
       return new Response(JSON.stringify({ ok: true }), { headers: { "content-type": "application/json" } });
     }
